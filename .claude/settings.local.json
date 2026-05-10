@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer --version)",
+      "PowerShell(composer *)",
+      "PowerShell(php --version 2>&1; Write-Host \"---\"; where.exe php 2>&1; Write-Host \"---\"; where.exe composer 2>&1)",
+      "Bash(php artisan *)"
+    ]
+  }
+}
