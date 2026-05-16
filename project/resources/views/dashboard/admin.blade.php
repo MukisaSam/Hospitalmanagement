@@ -120,7 +120,7 @@
                                 </td>
                                 <td>
                                     <span class="badge bg-light text-dark border">
-                                        {{ ucwords(str_replace('_', ' ', $appointment->type ?? 'N/A')) }}
+                                        {{ ucwords(str_replace('_', ' ', $appointment->type->value ?? 'N/A')) }}
                                     </span>
                                 </td>
                                 <td>
