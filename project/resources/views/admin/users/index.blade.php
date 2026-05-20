@@ -64,13 +64,13 @@
                                 <i class="fas fa-edit"></i>
                             </a>
                             <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}" class="d-inline">
-                                @csrf @method('PATCH')
+                                @csrf
                                 <button type="submit" class="btn btn-sm btn-outline-secondary me-1" title="Toggle Status">
                                     <i class="fas fa-toggle-on"></i>
                                 </button>
                             </form>
                             <form method="POST" action="{{ route('admin.users.reset-password', $user) }}" class="d-inline">
-                                @csrf @method('PATCH')
+                                @csrf
                                 <button type="submit" class="btn btn-sm btn-outline-info me-1"
                                         onclick="return confirm('Reset password for {{ $user->name }}?')" title="Reset Password">
                                     <i class="fas fa-key"></i>

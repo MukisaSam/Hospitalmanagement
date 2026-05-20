@@ -65,17 +65,17 @@
                     @error('specialization')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="qualification" class="form-label">Qualification</label>
+                    <label for="qualification" class="form-label">Qualification <span class="text-danger">*</span></label>
                     <input type="text" id="qualification" name="qualification"
                            class="form-control @error('qualification') is-invalid @enderror"
-                           value="{{ old('qualification') }}">
+                           value="{{ old('qualification') }}" required>
                     @error('qualification')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="experience_years" class="form-label">Experience (years)</label>
+                    <label for="experience_years" class="form-label">Experience (years) <span class="text-danger">*</span></label>
                     <input type="number" id="experience_years" name="experience_years"
                            class="form-control @error('experience_years') is-invalid @enderror"
-                           value="{{ old('experience_years') }}" min="0">
+                           value="{{ old('experience_years') }}" min="0" required>
                     @error('experience_years')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-md-4">

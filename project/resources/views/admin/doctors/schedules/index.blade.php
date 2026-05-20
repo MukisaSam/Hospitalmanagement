@@ -45,12 +45,12 @@
                         @endif
                     </td>
                     <td>
-                        <a href="{{ route('admin.doctors.schedules.edit', [$doctor, $schedule]) }}"
+                        <a href="{{ route('admin.schedules.edit', [$doctor, $schedule]) }}"
                            class="btn btn-sm btn-outline-warning me-1">
                             <i class="fas fa-edit"></i>
                         </a>
                         <form method="POST"
-                              action="{{ route('admin.doctors.schedules.destroy', [$doctor, $schedule]) }}"
+                              action="{{ route('admin.schedules.destroy', [$doctor, $schedule]) }}"
                               class="d-inline">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-outline-danger"
