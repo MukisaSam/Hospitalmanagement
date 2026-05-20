@@ -16,6 +16,7 @@ use App\Observers\MedicalRecordObserver;
 use App\Observers\PatientObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\UserObserver;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Paginator::useBootstrapFive();
+
         Patient::observe(PatientObserver::class);
         User::observe(UserObserver::class);
         Doctor::observe(DoctorObserver::class);
