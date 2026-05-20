@@ -12,6 +12,19 @@ use Illuminate\View\View;
 
 class MedicalRecordController extends Controller
 {
+    public function index(): View
+    {
+        $doctor = auth()->user()->doctor;
+        abort_unless($doctor, 403);
+
+        $records = MedicalRecord::with(['patient', 'appointment'])
+            ->where('doctor_id', $doctor->id)
+            ->orderBy('visit_date', 'desc')
+            ->paginate(25);
+
+        return view('doctor.medical-records.index', compact('records'));
+    }
+
     public function create(Request $request): View
     {
         $doctor   = auth()->user()->doctor;

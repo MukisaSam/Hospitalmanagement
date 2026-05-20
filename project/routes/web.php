@@ -127,7 +127,7 @@ Route::middleware(['auth', 'check.role:doctor'])
         Route::get('appointments', [DoctorAppointmentController::class, 'index'])->name('appointments.index');
         Route::patch('appointments/{appointment}/status', [DoctorAppointmentController::class, 'updateStatus'])->name('appointments.status');
 
-        Route::resource('medical-records', MedicalRecordController::class)->except(['index', 'destroy']);
+        Route::resource('medical-records', MedicalRecordController::class)->except(['destroy']);
         Route::resource('medical-records.prescriptions', PrescriptionController::class)->except(['index', 'show']);
         Route::resource('medical-records.vitals', VitalController::class)->only(['store', 'update']);
     });
