@@ -112,6 +112,8 @@ Route::middleware(['auth', 'check.role:admin,receptionist'])->group(function () 
     Route::resource('invoices', InvoiceController::class)->only(['index', 'show', 'edit', 'update']);
     Route::resource('invoices.items', InvoiceItemController::class)->except(['show']);
     Route::resource('invoices.payments', PaymentController::class)->only(['store']);
+    Route::patch('invoices/{invoice}/payments/{payment}/confirm', [PaymentController::class, 'confirm'])
+        ->name('invoices.payments.confirm');
     Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf');
 });
 

@@ -2,34 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConfirmPaymentRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Services\InvoiceService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
     public function __construct(private InvoiceService $invoiceService) {}
 
-    public function store(Request $request, Invoice $invoice): RedirectResponse
+    public function store(StorePaymentRequest $request, Invoice $invoice): RedirectResponse
     {
-        $unpayableStatuses = ['paid', 'cancelled'];
-        if (in_array($invoice->status->value, $unpayableStatuses)) {
+        try {
+            $this->invoiceService->recordPayment($invoice, $request->validated());
+        } catch (\InvalidArgumentException $e) {
             return redirect()->route('invoices.show', $invoice)
-                ->with('error', 'Payment cannot be recorded for this invoice.');
+                ->with('error', $e->getMessage());
         }
 
-        $data = $request->validate([
-            'amount_paid'      => 'required|numeric|min:0.01',
-            'payment_method'   => 'required|in:cash,card,mobile_money,bank_transfer,insurance',
-            'reference_number' => 'nullable|string|max:100',
-            'payment_date'     => 'required|date',
-            'notes'            => 'nullable|string',
-        ]);
+        return redirect()->route('invoices.show', $invoice)
+            ->with('success', 'Payment recorded and queued for confirmation.');
+    }
 
-        $this->invoiceService->recordPayment($invoice, $data);
+    public function confirm(ConfirmPaymentRequest $request, Invoice $invoice, Payment $payment): RedirectResponse
+    {
+        try {
+            $this->invoiceService->confirmPayment($invoice, $payment);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('invoices.show', $invoice)
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Payment recorded successfully.');
+            ->with('success', 'Payment confirmed successfully.');
     }
 }

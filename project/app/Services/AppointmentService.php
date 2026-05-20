@@ -67,6 +67,13 @@ class AppointmentService
             throw new InvalidStatusTransitionException("Cannot transition from {$oldStatus} to {$newStatus}.");
         }
 
+        if (in_array($newStatus, ['checked_in', 'in_progress', 'completed'], true)) {
+            $appointment->loadMissing('invoice');
+            if (!$appointment->invoice || $appointment->invoice->status->value !== 'paid') {
+                throw new InvalidStatusTransitionException('Payment must be confirmed before this appointment can proceed.');
+            }
+        }
+
         DB::transaction(function () use ($appointment, $oldStatus, $newStatus, $reason) {
             AppointmentLog::create([
                 'appointment_id' => $appointment->id,
@@ -89,6 +96,10 @@ class AppointmentService
                         'diagnosis'       => '',
                     ]
                 );
+            }
+
+            if ($newStatus === 'confirmed') {
+                $this->invoiceService->createForAppointment($appointment);
             }
 
             if ($newStatus === 'completed') {

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatus;
 use App\Models\Appointment;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -57,6 +58,18 @@ class InvoiceService
 
     public function recordPayment(Invoice $invoice, array $data): void
     {
+        if (in_array($invoice->status->value, ['paid', 'cancelled'])) {
+            throw new \InvalidArgumentException('Payment cannot be recorded for this invoice.');
+        }
+
+        $pendingExists = $invoice->payments()
+            ->where('status', PaymentStatus::Pending)
+            ->exists();
+
+        if ($pendingExists) {
+            throw new \InvalidArgumentException('A payment is already pending confirmation.');
+        }
+
         DB::transaction(function () use ($invoice, $data) {
             Payment::create([
                 'invoice_id'       => $invoice->id,
@@ -66,18 +79,47 @@ class InvoiceService
                 'payment_date'     => $data['payment_date'],
                 'paid_by'          => auth()->id(),
                 'notes'            => $data['notes'] ?? null,
+                'status'           => PaymentStatus::Pending,
+            ]);
+        });
+    }
+
+    public function confirmPayment(Invoice $invoice, Payment $payment): void
+    {
+        if ($payment->invoice_id !== $invoice->id) {
+            throw new \InvalidArgumentException('Payment does not belong to this invoice.');
+        }
+
+        if ($payment->status !== PaymentStatus::Pending) {
+            throw new \InvalidArgumentException('Only pending payments can be confirmed.');
+        }
+
+        if (in_array($invoice->status->value, ['paid', 'cancelled'])) {
+            throw new \InvalidArgumentException('This invoice cannot accept confirmations.');
+        }
+
+        $outstanding = max(0, (float) $invoice->total_amount - (float) $invoice->amount_paid);
+        if (round((float) $payment->amount_paid, 2) !== round($outstanding, 2)) {
+            throw new \InvalidArgumentException('Payment must cover the full outstanding balance.');
+        }
+
+        DB::transaction(function () use ($invoice, $payment) {
+            $payment->update([
+                'status'       => PaymentStatus::Confirmed,
+                'confirmed_by' => auth()->id(),
+                'confirmed_at' => now(),
             ]);
 
-            $totalPaid = Payment::where('invoice_id', $invoice->id)->sum('amount_paid');
+            $totalPaid = Payment::where('invoice_id', $invoice->id)
+                ->where('status', PaymentStatus::Confirmed)
+                ->sum('amount_paid');
 
-            $status = 'unpaid';
-            if ($totalPaid >= $invoice->total_amount) {
-                $status = 'paid';
-            } elseif ($totalPaid > 0) {
-                $status = 'partial';
-            }
+            $status = $totalPaid >= $invoice->total_amount ? 'paid' : 'unpaid';
 
-            $invoice->update(['amount_paid' => $totalPaid, 'status' => $status]);
+            $invoice->update([
+                'amount_paid' => $totalPaid,
+                'status'      => $status,
+            ]);
         });
     }
 }

@@ -9,7 +9,11 @@
     ['label' => $invoice->invoice_number],
 ]" />
 
-@php $editable = in_array($invoice->status->value, ['unpaid', 'partial']); @endphp
+@php
+    $editable = in_array($invoice->status->value, ['unpaid', 'partial']);
+    $canConfirm = in_array(auth()->user()->role->value, ['admin', 'receptionist']);
+    $balance = max(0, $invoice->total_amount - $invoice->amount_paid);
+@endphp
 
 <div class="d-flex gap-2 mb-4">
     @if($editable)
@@ -158,7 +162,11 @@
                                 <th>Date</th>
                                 <th>Amount</th>
                                 <th>Method</th>
+                                <th>Status</th>
                                 <th>Reference</th>
+                                @if($canConfirm)
+                                <th></th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -167,7 +175,24 @@
                                 <td>{{ $payment->payment_date?->format('d M Y') }}</td>
                                 <td>{{ number_format($payment->amount_paid, 2) }}</td>
                                 <td>{{ ucwords(str_replace('_', ' ', $payment->payment_method?->value ?? '')) }}</td>
+                                <td>
+                                    @if($payment->status?->value === 'pending')
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    @else
+                                        <span class="badge bg-success">Confirmed</span>
+                                    @endif
+                                </td>
                                 <td>{{ $payment->reference_number ?? '—' }}</td>
+                                @if($canConfirm)
+                                <td class="text-end">
+                                    @if($payment->status?->value === 'pending')
+                                        <form method="POST" action="{{ route('invoices.payments.confirm', [$invoice, $payment]) }}">
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-success">Confirm</button>
+                                        </form>
+                                    @endif
+                                </td>
+                                @endif
                             </tr>
                             @endforeach
                         </tbody>
@@ -192,9 +217,10 @@
                         <label for="amount_paid" class="form-label">Amount <span class="text-danger">*</span></label>
                         <input type="number" id="amount_paid" name="amount_paid"
                                class="form-control @error('amount_paid') is-invalid @enderror"
-                               step="0.01" min="0.01"
-                               value="{{ old('amount_paid', max(0, $invoice->total_amount - $invoice->amount_paid)) }}"
+                               step="0.01" min="{{ number_format($balance, 2, '.', '') }}" max="{{ number_format($balance, 2, '.', '') }}"
+                               value="{{ old('amount_paid', number_format($balance, 2, '.', '')) }}"
                                required>
+                        <div class="form-text">Full payment is required. Partial payments are not allowed.</div>
                         @error('amount_paid')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="mb-3">
